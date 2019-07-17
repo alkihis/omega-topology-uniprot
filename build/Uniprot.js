@@ -34,7 +34,6 @@ class Uniprot {
             }
         }
         else if (this.cache_mode === CacheMode.couchdb && this.dispatcher_url) {
-            console.log("Bulking from couch");
             found.push(...await this.couchBulkGet([...idset]));
             for (const p of found) {
                 idset.delete(p.accession);
