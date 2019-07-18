@@ -43,6 +43,8 @@ node build/index.js -c http://localhost:5984 -d http://localhost:3280 -m couch
 
 All endpoints are CORS-ready.
 
+All endpoints use JSON-formatted body in request. In order to use JSON in body, **don't forget to add header `Content-Type: application/json`** in your request !
+
 All endpoints take a single argument inside a JSON-formatted body, named `ids`, who must be an array of `string`, representing the **UniProt accession number** of the proteins you want data from.
 
 ### POST /short
