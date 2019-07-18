@@ -81,7 +81,6 @@ class Uniprot {
         return [].concat(...await Promise.all(requests));
     }
     async bulkSave(prots) {
-        console.log("saving");
         const document_name = 'uniprot';
         const nn = nano_1.default(this.couch_url);
         await nn.db.create(document_name).catch(() => { });
@@ -92,11 +91,7 @@ class Uniprot {
                 await Promise.all(promises);
                 promises = [];
             }
-            promises.push(id_db.insert(protein, protein.accession).catch(e => e)
-            // .catch(foo => {
-            //     return id_db.insert({ ...protein, _rev: foo.rev } as MaybeDocument, protein.accession)
-            // })
-            );
+            promises.push(id_db.insert(protein, protein.accession).catch(e => e));
         }
         await Promise.all(promises);
     }

@@ -54,7 +54,7 @@ app.post('/short', async (req, res) => {
 });
 app.post('/go', async (req, res) => {
     const ids = req.body.ids;
-    console.log("Bulk request. Please wait...");
+    // console.log("Bulk request. Please wait...");
     if (!ids || !Array.isArray(ids)) {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }

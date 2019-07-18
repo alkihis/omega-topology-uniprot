@@ -101,7 +101,6 @@ export default class Uniprot {
     }
 
     protected async bulkSave(prots: UniprotProtein[]) {
-        console.log("saving")
         const document_name = 'uniprot';
         const nn = nano(this.couch_url);
 
@@ -119,9 +118,6 @@ export default class Uniprot {
     
             promises.push(
                 id_db.insert(protein as MaybeDocument, protein.accession).catch(e => e)
-                // .catch(foo => {
-                //     return id_db.insert({ ...protein, _rev: foo.rev } as MaybeDocument, protein.accession)
-                // })
             );
         }
     
