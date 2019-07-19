@@ -25,6 +25,7 @@ Options:
   -d, --dispatcherUrl [dispatcherUrl]  Couch dispatcher URL (default: "")
   -m, --mode [cacheMode]               Cache mode [couch|native] (default: "native")
   -x, --proxy [proxyUrl]               Proxy URL
+  -l, --logLevel [logLevel]            Verbosity (debug, verbose, info, warn, error) (default: "warn")
 ```
 
 - -p, --port &lt;portNumber&gt; : Port used by the micro-service to listen to request

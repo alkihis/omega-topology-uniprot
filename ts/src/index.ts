@@ -3,6 +3,7 @@ import commander from 'commander';
 import Uniprot, { CacheMode } from './Uniprot';
 import HttpsProxyAgent from 'https-proxy-agent';
 import fetch from 'node-fetch';
+import Winston from 'winston';
 
 commander
     .option('-p, --port [portNumber]', "Server port number", parseInt, 3289)
@@ -10,8 +11,23 @@ commander
     .option('-d, --dispatcherUrl [dispatcherUrl]', "Couch dispatcher URL", "")
     .option('-m, --mode [cacheMode]', "Cache mode [couch|native]", /^(couch|native)$/, 'native')
     .option('-x, --proxy [proxyUrl]', 'Proxy URL')
+    .option('-l, --logLevel [logLevel]', 'Log level [debug|verbose|info|warn|error]', /^(debug|verbose|info|warn|error)$/, 'warn')
 .parse(process.argv);
 
+export const logger = Winston.createLogger({
+    level: commander.logLevel,
+    format: Winston.format.combine(
+        Winston.format.timestamp({
+          format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        Winston.format.errors({ stack: true }),
+        Winston.format.splat(),
+        Winston.format.json()
+    ),
+    transports: [
+        new Winston.transports.Console
+    ]
+});
 
 // Init request (for use in back, not needed when using in front)
 Uniprot.requester = fetch;
@@ -47,6 +63,8 @@ app.post('/short', async (req, res) => {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
 
+    logger.debug(`Request ${ids.level} ids`);
+
     const prots = await uniprot.fetch(ids);
     res.json(uniprot.makeShortMany(prots));
 });
@@ -60,6 +78,8 @@ app.post('/go', async (req, res) => {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
 
+    logger.debug(`Request ${ids.level} ids`);
+
     const prots = await uniprot.fetch(ids);
     res.json(uniprot.makeGoTermsMany(prots));
 });
@@ -70,6 +90,8 @@ app.post('/long', async (req, res) => {
     if (!ids || !Array.isArray(ids)) {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
+
+    logger.debug(`Request ${ids.level} ids`);
 
     const prots = await uniprot.fetch(ids);
     res.json(prots);

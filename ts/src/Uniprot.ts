@@ -1,5 +1,6 @@
 import nano, { MaybeDocument } from 'nano';
 import fetch from 'node-fetch';
+import { logger } from './index';
 
 export enum CacheMode {
     object, couchdb
@@ -28,6 +29,8 @@ export default class Uniprot {
         ids = [];
 
         if (this.cache_mode === CacheMode.object) {
+            logger.debug('Fetching from JS cache');
+
             for (const i of idset) {
                 if (i in Uniprot.cache) {
                     found.push(Uniprot.cache[i]);
@@ -36,9 +39,19 @@ export default class Uniprot {
                     ids.push(i);
                 }
             }
+
+            logger.debug(`Found ${found.length} items in JS cache`);
         }
         else if (this.cache_mode === CacheMode.couchdb && this.dispatcher_url) {
-            found.push(...await this.couchBulkGet([...idset]));
+            logger.debug('Fetching from Couch cache');
+
+            try {
+                found.push(...await this.couchBulkGet([...idset]));
+            } catch (e) {
+                logger.warn(`Unable to fetch from couch:`, e);
+            }
+
+            logger.debug(`Found ${found.length} items in couch cache`);
 
             for (const p of found) {
                 idset.delete(p.accession);
@@ -79,7 +92,7 @@ export default class Uniprot {
             )
             .then((r: Response) => r.json() as Promise<UniprotProtein[]>)
             .then((ps: UniprotProtein[]) => {
-                console.log(`Fetched: ${i}-${Math.min(i + CHUNK_SIZE, ids.length)} / ${j}`);
+                logger.info(`Fetched: ${i}-${Math.min(i + CHUNK_SIZE, ids.length)} / ${j}`);
 
                 // Sauvegarde quand même dans le cache si il y a de la place
                 if (Object.keys(Uniprot.cache).length < 4000) {
@@ -104,6 +117,8 @@ export default class Uniprot {
         const document_name = 'uniprot';
         const nn = nano(this.couch_url);
 
+        logger.debug(`Saving to Couch ${prots.length} proteins...`);
+
         await nn.db.create(document_name).catch(() => {});
     
         const id_db = nn.use(document_name);
@@ -117,7 +132,10 @@ export default class Uniprot {
             }
     
             promises.push(
-                id_db.insert(protein as MaybeDocument, protein.accession).catch(e => e)
+                id_db.insert(protein as MaybeDocument, protein.accession).catch(e => {
+                    logger.info(`Unable to save protein to couch:`, e);
+                    return e;
+                })
             );
         }
     
@@ -135,7 +153,6 @@ export default class Uniprot {
         )
         .then(r => r.json())
         .then((data: any) => {
-            // console.log(data);
             const results = data.request;
             return Object.values(results);
         });
