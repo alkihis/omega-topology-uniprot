@@ -15,13 +15,25 @@ const commander_1 = __importDefault(require("commander"));
 const Uniprot_1 = __importStar(require("./Uniprot"));
 const https_proxy_agent_1 = __importDefault(require("https-proxy-agent"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const winston_1 = __importDefault(require("winston"));
 commander_1.default
     .option('-p, --port [portNumber]', "Server port number", parseInt, 3289)
     .option('-c, --couchUrl [couchUrl]', "Couch DB URL", "")
     .option('-d, --dispatcherUrl [dispatcherUrl]', "Couch dispatcher URL", "")
     .option('-m, --mode [cacheMode]', "Cache mode [couch|native]", /^(couch|native)$/, 'native')
     .option('-x, --proxy [proxyUrl]', 'Proxy URL')
+    .option('-l, --logLevel [logLevel]', 'Log level [debug|verbose|info|warn|error]', /^(debug|verbose|info|warn|error)$/, 'warn')
     .parse(process.argv);
+exports.logger = winston_1.default.createLogger({
+    level: 'warn',
+    transports: [
+        new winston_1.default.transports.Console({
+            format: winston_1.default.format.combine(winston_1.default.format.colorize(), winston_1.default.format.timestamp({
+                format: 'YYYY-MM-DD HH:mm:ss'
+            }), winston_1.default.format.errors({ stack: true }), winston_1.default.format.splat(), winston_1.default.format.simple())
+        })
+    ]
+});
 // Init request (for use in back, not needed when using in front)
 Uniprot_1.default.requester = node_fetch_1.default;
 if (commander_1.default.proxy) {
@@ -49,6 +61,7 @@ app.post('/short', async (req, res) => {
     if (!ids || !Array.isArray(ids)) {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
+    exports.logger.debug(`Request ${ids.level} ids`);
     const prots = await uniprot.fetch(ids);
     res.json(uniprot.makeShortMany(prots));
 });
@@ -58,6 +71,7 @@ app.post('/go', async (req, res) => {
     if (!ids || !Array.isArray(ids)) {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
+    exports.logger.debug(`Request ${ids.level} ids`);
     const prots = await uniprot.fetch(ids);
     res.json(uniprot.makeGoTermsMany(prots));
 });
@@ -66,6 +80,7 @@ app.post('/long', async (req, res) => {
     if (!ids || !Array.isArray(ids)) {
         res.status(400).json({ error: "IDs must be sended as JSON, inside an array at key 'ids'." });
     }
+    exports.logger.debug(`Request ${ids.level} ids`);
     const prots = await uniprot.fetch(ids);
     res.json(prots);
 });

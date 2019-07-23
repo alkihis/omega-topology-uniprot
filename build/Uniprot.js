@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const nano_1 = __importDefault(require("nano"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const index_1 = require("./index");
 var CacheMode;
 (function (CacheMode) {
     CacheMode[CacheMode["object"] = 0] = "object";
@@ -24,6 +25,7 @@ class Uniprot {
         const found = [];
         ids = [];
         if (this.cache_mode === CacheMode.object) {
+            index_1.logger.debug('Fetching from JS cache');
             for (const i of idset) {
                 if (i in Uniprot.cache) {
                     found.push(Uniprot.cache[i]);
@@ -32,9 +34,17 @@ class Uniprot {
                     ids.push(i);
                 }
             }
+            index_1.logger.debug(`Found ${found.length} items in JS cache`);
         }
         else if (this.cache_mode === CacheMode.couchdb && this.dispatcher_url) {
-            found.push(...await this.couchBulkGet([...idset]));
+            index_1.logger.debug('Fetching from Couch cache');
+            try {
+                found.push(...await this.couchBulkGet([...idset]));
+            }
+            catch (e) {
+                index_1.logger.warn(`Unable to fetch from couch:`, e);
+            }
+            index_1.logger.debug(`Found ${found.length} items in couch cache`);
             for (const p of found) {
                 idset.delete(p.accession);
             }
@@ -64,7 +74,7 @@ class Uniprot {
             })
                 .then((r) => r.json())
                 .then((ps) => {
-                console.log(`Fetched: ${i}-${Math.min(i + CHUNK_SIZE, ids.length)} / ${j}`);
+                index_1.logger.info(`Fetched: ${i}-${Math.min(i + CHUNK_SIZE, ids.length)} / ${j}`);
                 // Sauvegarde quand même dans le cache si il y a de la place
                 if (Object.keys(Uniprot.cache).length < 4000) {
                     for (const protein of ps) {
@@ -83,6 +93,7 @@ class Uniprot {
     async bulkSave(prots) {
         const document_name = 'uniprot';
         const nn = nano_1.default(this.couch_url);
+        index_1.logger.debug(`Saving to Couch ${prots.length} proteins...`);
         await nn.db.create(document_name).catch(() => { });
         const id_db = nn.use(document_name);
         let promises = [];
@@ -91,7 +102,10 @@ class Uniprot {
                 await Promise.all(promises);
                 promises = [];
             }
-            promises.push(id_db.insert(protein, protein.accession).catch(e => e));
+            promises.push(id_db.insert(protein, protein.accession).catch(e => {
+                index_1.logger.info(`Unable to save protein to couch:`, e);
+                return e;
+            }));
         }
         await Promise.all(promises);
     }
@@ -103,7 +117,6 @@ class Uniprot {
         })
             .then(r => r.json())
             .then((data) => {
-            // console.log(data);
             const results = data.request;
             return Object.values(results);
         });
