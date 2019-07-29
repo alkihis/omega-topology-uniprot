@@ -75,17 +75,20 @@ class Uniprot {
                 .then((r) => r.json())
                 .then((ps) => {
                 index_1.logger.info(`Fetched: ${i}-${Math.min(i + CHUNK_SIZE, ids.length)} / ${j}`);
-                // Sauvegarde quand même dans le cache si il y a de la place
-                if (Object.keys(Uniprot.cache).length < 4000) {
-                    for (const protein of ps) {
-                        Uniprot.cache[protein.accession] = protein;
+                if (ps) {
+                    // Sauvegarde quand même dans le cache si il y a de la place
+                    if (Object.keys(Uniprot.cache).length < 4000) {
+                        for (const protein of ps) {
+                            Uniprot.cache[protein.accession] = protein;
+                        }
                     }
+                    if (this.cache_mode === CacheMode.couchdb && this.couch_url) {
+                        // N'attends pas, sauvegarde en parallèle
+                        this.bulkSave(ps);
+                    }
+                    return ps;
                 }
-                if (this.cache_mode === CacheMode.couchdb && this.couch_url) {
-                    // N'attends pas, sauvegarde en parallèle
-                    this.bulkSave(ps);
-                }
-                return ps;
+                return [];
             }));
         }
         return [].concat(...await Promise.all(requests));
