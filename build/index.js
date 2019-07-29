@@ -17,7 +17,7 @@ const https_proxy_agent_1 = __importDefault(require("https-proxy-agent"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const winston_1 = __importDefault(require("winston"));
 commander_1.default
-    .option('-p, --port [portNumber]', "Server port number", parseInt, 3289)
+    .option('-p, --port [portNumber]', "Server port number", Number, 3289)
     .option('-c, --couchUrl [couchUrl]', "Couch DB URL", "")
     .option('-d, --dispatcherUrl [dispatcherUrl]', "Couch dispatcher URL", "")
     .option('-m, --mode [cacheMode]', "Cache mode [couch|native]", /^(couch|native)$/, 'native')
