@@ -95,7 +95,7 @@ class Uniprot {
     }
     async bulkSave(prots) {
         const document_name = 'uniprot';
-        const nn = nano_1.default(this.couch_url);
+        const nn = nano_1.default({ url: this.couch_url, requestDefaults: { proxy: null } });
         index_1.logger.debug(`Saving to Couch ${prots.length} proteins...`);
         await nn.db.create(document_name).catch(() => { });
         const id_db = nn.use(document_name);

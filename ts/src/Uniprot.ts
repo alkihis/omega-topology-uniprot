@@ -117,7 +117,7 @@ export default class Uniprot {
 
     protected async bulkSave(prots: UniprotProtein[]) {
         const document_name = 'uniprot';
-        const nn = nano(this.couch_url);
+        const nn = nano({ url: this.couch_url, requestDefaults: { proxy: null } });
 
         logger.debug(`Saving to Couch ${prots.length} proteins...`);
 
