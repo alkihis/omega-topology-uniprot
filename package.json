@@ -15,7 +15,7 @@
     "@types/node-fetch": "^2.3.7",
     "commander": "^2.20.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "https-proxy-agent": "^2.2.1",
     "nano": "^8.1.0",
     "node-fetch": "^2.6.0",
